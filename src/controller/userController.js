@@ -5,8 +5,7 @@ import  Jwt  from "jsonwebtoken";
 export const createUser = async (req, res) => {
    
     try {
-        const {name, email, password} = req.body;
-
+        const {name,email,password} = req.body;
     const userExists = await User.findOne({email});
    if (userExists) {
        return res.status(400).json({message: "User already exists"});
@@ -19,7 +18,8 @@ export const createUser = async (req, res) => {
     });
 
     await user.save();
-    return res.status(201).json(user);
+    const Token = Jwt.sign({_id: user._id},JWT_SECRET)
+    return res.status(201).json({...user.toJSON(), Token,});
 
     } catch (error) {
         return res.status(500).json({message: error.message});
@@ -28,26 +28,19 @@ export const createUser = async (req, res) => {
 }
 
 export const loginUser = async (req, res) => {
-   
     try {
         const {email, password} = req.body;
-
     const userExists = await User.findOne({email}).select("+password");
    if (!userExists) {
-       return res.status(400).json({message: "invalid email"});
+       return res.status(400).json({message: "Invalid email"});
    }
    const isCorrectPassword = await userExists.comparePassword(password);
    if (!isCorrectPassword) {
        return res.status(400).json({message: "password is incorrect"});
-    
-   }
-   
+   } 
    const Token = Jwt.sign({_id: userExists._id},JWT_SECRET)
-  
-    return res.status(200).json({...userExists.toJSON(), Token});
-
+    return res.status(200).json({...userExists.toJSON(), Token});   
     } catch (error) {
-        return res.status(500).json({message: error.message});
-        
+        return res.status(500).json({message: error.message});    
     }
 }
